@@ -25,8 +25,6 @@ public class MineStormGuilds extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        ConfigMerger.mergeAll(this);   // auto-merge: add keys missing from config.yml / messages.yml
-        reloadConfig();
         messages = new Messages(this);
         messages.load();
 
@@ -88,7 +86,6 @@ public class MineStormGuilds extends JavaPlugin {
     }
 
     public void reloadAll() {
-        ConfigMerger.mergeAll(this);
         reloadConfig();
         messages.load();
         tabManager.purgeStale();

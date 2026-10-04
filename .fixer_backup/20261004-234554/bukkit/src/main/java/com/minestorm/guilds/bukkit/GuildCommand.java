@@ -151,11 +151,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         }
         if (gm.exists(name)) { m.send(p, "name-taken"); return; }
         Guild g = gm.createGuild(name, p);
-        if (!gm.save()) {   // the database refused it -> undo and tell the player
-            gm.disband(g);
-            m.send(p, "database-error");
-            return;
-        }
+        gm.save();
         plugin.getTabManager().apply(p);
         m.send(p, "guild-created", "guild", "&b" + g.getName());
         m.send(p, "guild-created-hint");

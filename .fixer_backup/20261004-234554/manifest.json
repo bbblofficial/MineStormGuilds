@@ -1,0 +1,14 @@
+{
+  "modified": [
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/Database.java",
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/GuildManager.java",
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/GuildCacheRefresher.java",
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/MineStormGuilds.java",
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/GuildCommand.java",
+    "bukkit/src/main/resources/config.yml",
+    "bukkit/src/main/resources/messages.yml"
+  ],
+  "created": [
+    "bukkit/src/main/java/com/minestorm/guilds/bukkit/ConfigMerger.java"
+  ]
+}

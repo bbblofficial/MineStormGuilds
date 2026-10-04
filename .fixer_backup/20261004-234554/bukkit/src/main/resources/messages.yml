@@ -116,6 +116,3 @@ admin-cannot-remove-master: "%prefix%&cThat player is the Guild Master. Delete t
 admin-player-info: "%prefix%&f%player% &7-> &b%guild% &7(rank: &f%rank%&7)"
 admin-player-noguild: "%prefix%&f%player% &7is not in a guild."
 admin-player-removed: "%prefix%&cRemoved %player% &cfrom their guild."
-
-# Database
-database-error: "%prefix%&cCould not save to the database. Please tell an administrator."

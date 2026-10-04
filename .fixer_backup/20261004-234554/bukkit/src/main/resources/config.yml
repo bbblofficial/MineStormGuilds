@@ -62,15 +62,3 @@ database:
   # How often each server re-reads the shared DB (seconds).
   # 0 = disabled (changes only show up on restart).
   refresh-interval-seconds: 5
-
-# ============================================================
-#  Auto-merge: after a plugin update, keys that are missing from your files are added
-#  automatically. Your values and comments are never changed or removed
-#  (a .bak copy is written first).
-#    config:   config.yml          messages: messages.yml
-#    database: create/upgrade missing tables, columns and indexes
-# ============================================================
-auto-merge:
-  config: true
-  messages: true
-  database: true
