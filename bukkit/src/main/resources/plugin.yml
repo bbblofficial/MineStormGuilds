@@ -1,0 +1,57 @@
+name: MineStormGuilds
+version: ${project.version}
+main: com.minestorm.guilds.bukkit.MineStormGuilds
+api-version: 1.8
+author: Muvixo
+description: Advanced Guild System by Muvixo
+softdepend: [PlaceholderAPI]
+commands:
+  guild:
+    aliases: [g, minestormguilds]
+    description: Guild command
+  gc:
+    description: Guild chat
+  msga:
+    aliases: [minestormguildsadmin]
+    description: MineStormGuilds admin command
+    permission: minestormguilds.admin
+permissions:
+  minestormguilds.admin:
+    description: Full admin access
+    default: op
+    children:
+      minestormguilds.admin.reload: true
+      minestormguilds.admin.guild.create: true
+      minestormguilds.admin.guild.delete: true
+      minestormguilds.admin.guild.color: true
+      minestormguilds.admin.guild.tab: true
+      minestormguilds.admin.guild.member.add: true
+      minestormguilds.admin.guild.member.remove: true
+      minestormguilds.admin.player.info: true
+      minestormguilds.admin.player.remove: true
+  minestormguilds.admin.reload:
+    default: op
+  minestormguilds.admin.guild.create:
+    default: op
+  minestormguilds.admin.guild.delete:
+    default: op
+  minestormguilds.admin.guild.color:
+    default: op
+  minestormguilds.admin.guild.tab:
+    default: op
+  minestormguilds.admin.guild.member.add:
+    default: op
+  minestormguilds.admin.guild.member.remove:
+    default: op
+  minestormguilds.admin.player.info:
+    default: op
+  minestormguilds.admin.player.remove:
+    default: op
+  minestormguilds.color:
+    default: true
+  minestormguilds.tab:
+    default: true
+  minestormguilds.create:
+    default: true
+  minestormguilds.chat.color:
+    default: op

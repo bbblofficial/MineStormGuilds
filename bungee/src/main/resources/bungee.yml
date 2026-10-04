@@ -1,0 +1,5 @@
+name: MineStormGuilds
+main: com.minestorm.guilds.bungee.MineStormGuildsBungee
+version: ${project.version}
+author: Muvixo
+description: Advanced Guild System — Proxy Bridge

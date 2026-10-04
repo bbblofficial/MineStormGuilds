@@ -1,0 +1,31 @@
+# ==========================================================
+# MineStormGuilds - Configuration  |  Created by Muvixo
+# ==========================================================
+settings:
+  name-min: 3
+  name-max: 16
+  max-ranks: 10
+  invite-expire-seconds: 60
+  suppress-public-join-quit: true
+  # Prefix shown in all plugin messages (also in messages.yml)
+  default-color: a
+
+tab:
+  enabled: true
+  formats:
+    NAME: "%guild_color%[%guild_name%] &f"
+    RANK: "%guild_color%[%guild_rank%] &f"
+    NAME_RANK: "%guild_color%[%guild_name%|%guild_rank%] &f"
+    NONE: ""
+
+formats:
+  member-join: "&2Guild > &a%player% &ejoined the Server!"
+  member-quit: "&2Guild > &a%player% &eleft the Server!"
+  guild-chat: "&2Guild > &f%player% &b[%rank%]&f: %message%"
+
+placeholders:
+  no-guild: ""
+
+database:
+  # file will be created in plugins/MineStormGuilds/
+  file: "guilds.db"
