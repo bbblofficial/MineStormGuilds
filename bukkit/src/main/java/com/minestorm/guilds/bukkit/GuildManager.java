@@ -31,6 +31,8 @@ public class GuildManager {
         this.db = new Database(plugin);
     }
 
+    public Database getDatabase() { return db; }
+
     private static String key(String name) { return name.toLowerCase(); }
 
     public Guild getGuild(UUID player) {
@@ -107,78 +109,68 @@ public class GuildManager {
         for (Map<UUID, Long> m : requests.values()) m.remove(requester);
     }
 
-    // ------- SQLite load/save -------
+    // ------- load / save -------
+
     public synchronized void load() {
         guilds.clear();
         playerGuild.clear();
-        try {
-            Connection c = db.connection();
-            Map<Integer, Guild> byId = new LinkedHashMap<Integer, Guild>();
 
-            Statement st = c.createStatement();
-            try {
-                ResultSet rs = st.executeQuery(
-                        "SELECT id, name, master_uuid, color, tab_mode, created FROM guilds");
-                try {
-                    while (rs.next()) {
-                        String name = rs.getString("name");
-                        UUID master = UUID.fromString(rs.getString("master_uuid"));
-                        TabMode mode;
-                        try { mode = TabMode.valueOf(rs.getString("tab_mode").toUpperCase()); }
-                        catch (Exception ex) { mode = TabMode.NAME; }
-                        Guild g = new Guild(name, master, "Unknown", rs.getLong("created"));
-                        String col = rs.getString("color");
-                        if (col != null && !col.isEmpty()) g.setColor(col.charAt(0));
-                        g.setTabMode(mode);
-                        byId.put(rs.getInt("id"), g);
-                        guilds.put(key(name), g);
-                    }
-                } finally {
-                    rs.close();
+        Connection c = null;
+        try {
+            c = db.connection();
+            Map<Long, Guild> byId = new LinkedHashMap<Long, Guild>();
+
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery(
+                     "SELECT id, name, master_uuid, color, tab_mode, created FROM guilds")) {
+                while (rs.next()) {
+                    String name = rs.getString("name");
+                    UUID master = UUID.fromString(rs.getString("master_uuid"));
+                    TabMode mode;
+                    try { mode = TabMode.valueOf(rs.getString("tab_mode").toUpperCase()); }
+                    catch (Exception ex) { mode = TabMode.NAME; }
+                    Guild g = new Guild(name, master, "Unknown", rs.getLong("created"));
+                    String col = rs.getString("color");
+                    if (col != null && !col.isEmpty()) g.setColor(col.charAt(0));
+                    g.setTabMode(mode);
+                    byId.put(rs.getLong("id"), g);
+                    guilds.put(key(name), g);
                 }
-            } finally {
-                st.close();
             }
 
-            for (Map.Entry<Integer, Guild> e : byId.entrySet()) {
+            for (Map.Entry<Long, Guild> e : byId.entrySet()) {
                 Guild g = e.getValue();
 
-                // ranks FIRST, otherwise members with custom ranks would be reset to Member
-                PreparedStatement rk = c.prepareStatement(
-                        "SELECT rank FROM ranks WHERE guild_id = ? ORDER BY position ASC");
-                try {
-                    rk.setInt(1, e.getKey());
-                    ResultSet rr = rk.executeQuery();
-                    List<String> custom = new ArrayList<String>();
-                    while (rr.next()) custom.add(rr.getString("rank"));
-                    rr.close();
-                    if (!custom.isEmpty()) g.setRanks(custom);
-                } finally {
-                    rk.close();
+                try (PreparedStatement rk = c.prepareStatement(
+                        "SELECT rank FROM ranks WHERE guild_id = ? ORDER BY position ASC")) {
+                    rk.setLong(1, e.getKey());
+                    try (ResultSet rr = rk.executeQuery()) {
+                        List<String> custom = new ArrayList<String>();
+                        while (rr.next()) custom.add(rr.getString("rank"));
+                        if (!custom.isEmpty()) g.setRanks(custom);
+                    }
                 }
 
-                PreparedStatement ps = c.prepareStatement(
-                        "SELECT uuid, name, rank FROM members WHERE guild_id = ?");
-                try {
-                    ps.setInt(1, e.getKey());
-                    ResultSet mr = ps.executeQuery();
-                    while (mr.next()) {
-                        UUID u = UUID.fromString(mr.getString("uuid"));
-                        String rank = mr.getString("rank");
-                        if (u.equals(g.getMaster())) rank = Guild.MASTER_RANK;
-                        g.addMember(u, mr.getString("name"), rank);
-                        playerGuild.put(u, key(g.getName()));
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT uuid, name, rank FROM members WHERE guild_id = ?")) {
+                    ps.setLong(1, e.getKey());
+                    try (ResultSet mr = ps.executeQuery()) {
+                        while (mr.next()) {
+                            UUID u = UUID.fromString(mr.getString("uuid"));
+                            String rank = mr.getString("rank");
+                            if (u.equals(g.getMaster())) rank = Guild.MASTER_RANK;
+                            g.addMember(u, mr.getString("name"), rank);
+                            playerGuild.put(u, key(g.getName()));
+                        }
                     }
-                    mr.close();
-                } finally {
-                    ps.close();
                 }
                 playerGuild.put(g.getMaster(), key(g.getName()));
             }
         } catch (Exception ex) {
             plugin.getLogger().severe("Load failed: " + ex.getMessage());
+        } finally {
+            closeQuiet(c);
         }
-        plugin.getLogger().info("Loaded " + guilds.size() + " guild(s) from SQLite.");
     }
 
     public synchronized void save() {
@@ -187,24 +179,26 @@ public class GuildManager {
             c = db.connection();
             c.setAutoCommit(false);
 
-            Statement st = c.createStatement();
-            try {
-                st.executeUpdate("DELETE FROM members");
-                st.executeUpdate("DELETE FROM ranks");
-                st.executeUpdate("DELETE FROM guilds");
-            } finally {
-                st.close();
-            }
+            boolean mysql = db.getType() == Database.Type.MYSQL;
 
-            PreparedStatement gp = c.prepareStatement(
-                    "INSERT INTO guilds(name, master_uuid, color, tab_mode, created) VALUES(?,?,?,?,?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            PreparedStatement mp = c.prepareStatement(
-                    "INSERT INTO members(guild_id, uuid, name, rank, joined) VALUES(?,?,?,?,?)");
-            PreparedStatement rp = c.prepareStatement(
-                    "INSERT INTO ranks(guild_id, rank, position) VALUES(?,?,?)");
-            try {
+            String guildSql = mysql
+                ? "INSERT INTO guilds(name, master_uuid, color, tab_mode, created) VALUES(?,?,?,?,?) " +
+                  "ON DUPLICATE KEY UPDATE master_uuid=VALUES(master_uuid), color=VALUES(color), " +
+                  "tab_mode=VALUES(tab_mode)"
+                : "INSERT OR REPLACE INTO guilds(name, master_uuid, color, tab_mode, created) VALUES(?,?,?,?,?)";
+
+            String memberSql = mysql
+                ? "INSERT INTO members(guild_id, uuid, name, rank, joined) VALUES(?,?,?,?,?) " +
+                  "ON DUPLICATE KEY UPDATE name=VALUES(name), rank=VALUES(rank)"
+                : "INSERT OR REPLACE INTO members(guild_id, uuid, name, rank, joined) VALUES(?,?,?,?,?)";
+
+            try (PreparedStatement gp = c.prepareStatement(guildSql, Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement mp = c.prepareStatement(memberSql);
+                 PreparedStatement rp = c.prepareStatement(
+                     "INSERT INTO ranks(guild_id, rank, position) VALUES(?,?,?)")) {
+
                 long now = System.currentTimeMillis();
+
                 for (Guild g : guilds.values()) {
                     gp.setString(1, g.getName());
                     gp.setString(2, g.getMaster().toString());
@@ -212,17 +206,23 @@ public class GuildManager {
                     gp.setString(4, g.getTabMode().name());
                     gp.setLong(5, g.getCreated());
                     gp.executeUpdate();
-                    int gid = 0;
-                    ResultSet keys = gp.getGeneratedKeys();
-                    try {
-                        if (keys.next()) gid = keys.getInt(1);
-                    } finally {
-                        keys.close();
+
+                    long gid = 0;
+                    try (ResultSet keys = gp.getGeneratedKeys()) {
+                        if (keys.next()) gid = keys.getLong(1);
                     }
-                    if (gid == 0) throw new SQLException("No generated id for guild " + g.getName());
+                    if (gid == 0) {
+                        try (PreparedStatement q = c.prepareStatement("SELECT id FROM guilds WHERE name=?")) {
+                            q.setString(1, g.getName());
+                            try (ResultSet r = q.executeQuery()) {
+                                if (r.next()) gid = r.getLong(1);
+                            }
+                        }
+                    }
+                    if (gid == 0) throw new SQLException("No id for guild " + g.getName());
 
                     for (UUID u : g.getMembers()) {
-                        mp.setInt(1, gid);
+                        mp.setLong(1, gid);
                         mp.setString(2, u.toString());
                         mp.setString(3, g.getMemberName(u));
                         mp.setString(4, g.getRank(u));
@@ -231,27 +231,35 @@ public class GuildManager {
                     }
                     mp.executeBatch();
 
+                    try (PreparedStatement del = c.prepareStatement("DELETE FROM ranks WHERE guild_id=?")) {
+                        del.setLong(1, gid);
+                        del.executeUpdate();
+                    }
                     int pos = 0;
                     for (String r : g.getRanks()) {
-                        rp.setInt(1, gid);
+                        rp.setLong(1, gid);
                         rp.setString(2, r);
                         rp.setInt(3, pos++);
                         rp.addBatch();
                     }
                     rp.executeBatch();
                 }
-            } finally {
-                gp.close();
-                mp.close();
-                rp.close();
             }
+
             c.commit();
         } catch (Exception ex) {
             plugin.getLogger().severe("Save failed: " + ex.getMessage());
             try { if (c != null) c.rollback(); } catch (SQLException ignored) {}
         } finally {
-            try { if (c != null) c.setAutoCommit(true); } catch (SQLException ignored) {}
+            if (c != null) {
+                try { c.setAutoCommit(true); } catch (SQLException ignored) {}
+                closeQuiet(c);
+            }
         }
+    }
+
+    private static void closeQuiet(Connection c) {
+        try { if (c != null) c.close(); } catch (SQLException ignored) {}
     }
 
     public void close() { db.close(); }

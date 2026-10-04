@@ -16,6 +16,7 @@ public class MineStormGuilds extends JavaPlugin {
     private GuiManager guiManager;
     private Messages messages;
     private ProxyBridge bridge;
+    private GuildCacheRefresher refresher;
     private boolean papi;
 
     private final Set<UUID> chatToggled =
@@ -51,12 +52,18 @@ public class MineStormGuilds extends JavaPlugin {
         tabManager.purgeStale();
         for (Player p : Bukkit.getOnlinePlayers()) tabManager.apply(p);
 
-        getLogger().info("MineStormGuilds enabled" + (papi ? " (PlaceholderAPI hooked)." : "."));
+        refresher = new GuildCacheRefresher(this);
+        refresher.start();
+
+        getLogger().info("MineStormGuilds enabled"
+                + (papi ? " (PlaceholderAPI hooked)." : ".")
+                + " Storage: " + guildManager.getDatabase().getType());
         getLogger().info("Created by Muvixo.");
     }
 
     @Override
     public void onDisable() {
+        if (refresher != null) refresher.stop();
         if (bridge != null) bridge.disable();
         if (guildManager != null) {
             guildManager.save();
@@ -78,7 +85,6 @@ public class MineStormGuilds extends JavaPlugin {
         }
     }
 
-    /** Reloads config + messages and re-applies every tab prefix. */
     public void reloadAll() {
         reloadConfig();
         messages.load();
@@ -93,6 +99,15 @@ public class MineStormGuilds extends JavaPlugin {
     public ProxyBridge getBridge() { return bridge; }
     public boolean hasPapi() { return papi; }
     public Set<UUID> getChatToggled() { return chatToggled; }
+
+    /** Fire-and-forget save so the main thread never blocks on MySQL. */
+    public void saveAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+            @Override public void run() {
+                guildManager.save();
+            }
+        });
+    }
 
     public void broadcast(Guild g, String colored) {
         for (UUID u : g.getMembers()) {
@@ -114,7 +129,6 @@ public class MineStormGuilds extends JavaPlugin {
         if (g == null) return;
         String fmt = getConfig().getString("formats.guild-chat",
                 "&2Guild > &f%player% &b[%rank%]&f: %message%");
-        // players can never smuggle raw section signs; '&' colors need the permission
         String clean = message.replace('\u00A7', ' ');
         String msg = sender.hasPermission("minestormguilds.chat.color") ? Msg.color(clean) : clean;
         String out = Msg.color(

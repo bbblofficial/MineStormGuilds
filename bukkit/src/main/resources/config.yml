@@ -35,6 +35,30 @@ placeholders:
 bridge:
   enabled: false
 
+# ============================================================
+#  MySQL — the plugin creates the database and tables itself.
+#  You only fill in the four values below.
+#  Leave type: sqlite if you don't want a shared MySQL.
+# ============================================================
 database:
-  # file will be created in plugins/MineStormGuilds/
+  type: mysql
+
+  # --- the only things you need to set ---
+  host: "127.0.0.1"
+  database: "minestormguilds"
+  username: "root"
+  password: ""
+
+  # --- optional overrides ---
+  port: 3306
+  useSSL: false
+  serverTimezone: "UTC"
+  # how many server-threads can hold a connection at once
+  poolSize: 10
+
+  # --- SQLite settings (only used when type: sqlite) ---
   file: "guilds.db"
+
+  # How often each server re-reads the shared DB (seconds).
+  # 0 = disabled (changes only show up on restart).
+  refresh-interval-seconds: 5
