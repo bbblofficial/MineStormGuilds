@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.minestorm.guilds</groupId>
     <artifactId>minestormguilds-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
   <artifactId>minestormguilds-velocity</artifactId>
   <name>MineStormGuilds-Velocity</name>
@@ -12,25 +12,36 @@
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+    <velocity.version>3.4.0-SNAPSHOT</velocity.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.velocitypowered</groupId>
       <artifactId>velocity-api</artifactId>
-      <version>3.3.0-SNAPSHOT</version>
+      <version>${velocity.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>papermc</id>
-      <url>https://repo.papermc.io/repository/maven-public/</url>
-    </repository>
-  </repositories>
-
   <build>
     <finalName>MineStormGuilds-Velocity-${project.version}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- JDK 23+ no longer runs annotation processors found on the classpath by default,
+               so the @Plugin processor (generates velocity-plugin.json) is declared explicitly. -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.velocitypowered</groupId>
+              <artifactId>velocity-api</artifactId>
+              <version>${velocity.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>

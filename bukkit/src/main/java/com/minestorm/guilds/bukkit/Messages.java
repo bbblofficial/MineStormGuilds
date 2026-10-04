@@ -5,13 +5,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 /**
  * Loads messages.yml and provides %key% lookup + prefix substitution.
- * All user-facing text should be fetched from here.
+ * Missing keys fall back to the defaults bundled in the jar (the user's file is never rewritten,
+ * so its comments are preserved).
  */
 public class Messages {
 
@@ -27,16 +29,14 @@ public class Messages {
         File f = new File(plugin.getDataFolder(), "messages.yml");
         if (!f.exists()) plugin.saveResource("messages.yml", false);
         cfg = YamlConfiguration.loadConfiguration(f);
-        try (InputStream in = plugin.getResource("messages.yml")) {
-            if (in != null) {
-                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
-                        new InputStreamReader(in, StandardCharsets.UTF_8));
-                cfg.setDefaults(defaults);
-                cfg.options().copyDefaults(true);
-                cfg.save(f);
+        InputStream in = plugin.getResource("messages.yml");
+        if (in != null) {
+            try {
+                cfg.setDefaults(YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(in, StandardCharsets.UTF_8)));
+            } finally {
+                try { in.close(); } catch (IOException ignored) {}
             }
-        } catch (Exception ex) {
-            plugin.getLogger().warning("messages.yml save failed: " + ex.getMessage());
         }
         prefix = cfg.getString("prefix", "&b&lMineStorm &f&lGuilds &8» &f");
     }
@@ -60,9 +60,5 @@ public class Messages {
 
     public void send(CommandSender to, String key, Object... kv) {
         to.sendMessage(format(key, kv));
-    }
-
-    public void sendRaw(CommandSender to, String msg) {
-        to.sendMessage(Msg.color(msg));
     }
 }

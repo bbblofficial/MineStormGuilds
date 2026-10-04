@@ -13,6 +13,7 @@ public enum TabMode {
         this.display = display;
         this.defaultFormat = defaultFormat;
     }
+
     public String getDisplay() { return display; }
     public String getDefaultFormat() { return defaultFormat; }
 }

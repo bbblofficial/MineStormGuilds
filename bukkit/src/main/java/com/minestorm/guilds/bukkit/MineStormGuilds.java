@@ -2,7 +2,6 @@ package com.minestorm.guilds.bukkit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
@@ -16,6 +15,7 @@ public class MineStormGuilds extends JavaPlugin {
     private TabManager tabManager;
     private GuiManager guiManager;
     private Messages messages;
+    private ProxyBridge bridge;
     private boolean papi;
 
     private final Set<UUID> chatToggled =
@@ -32,6 +32,8 @@ public class MineStormGuilds extends JavaPlugin {
 
         tabManager = new TabManager(this);
         guiManager = new GuiManager(this);
+        bridge = new ProxyBridge(this);
+        bridge.enable();
 
         GuildCommand cmd = new GuildCommand(this);
         AdminCommand admin = new AdminCommand(this);
@@ -42,8 +44,8 @@ public class MineStormGuilds extends JavaPlugin {
         getCommand("msga").setExecutor(admin);
         getCommand("msga").setTabCompleter(admin);
 
-        Bukkit.getPluginManager().registerEvents(new GuildListener(this), (Plugin) this);
-        Bukkit.getPluginManager().registerEvents(guiManager, (Plugin) this);
+        Bukkit.getPluginManager().registerEvents(new GuildListener(this), this);
+        Bukkit.getPluginManager().registerEvents(guiManager, this);
 
         hookPapi();
         tabManager.purgeStale();
@@ -55,7 +57,11 @@ public class MineStormGuilds extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (guildManager != null) guildManager.save();
+        if (bridge != null) bridge.disable();
+        if (guildManager != null) {
+            guildManager.save();
+            guildManager.close();
+        }
         if (tabManager != null) tabManager.purgeStale();
     }
 
@@ -72,10 +78,19 @@ public class MineStormGuilds extends JavaPlugin {
         }
     }
 
+    /** Reloads config + messages and re-applies every tab prefix. */
+    public void reloadAll() {
+        reloadConfig();
+        messages.load();
+        tabManager.purgeStale();
+        for (Player p : Bukkit.getOnlinePlayers()) tabManager.apply(p);
+    }
+
     public GuildManager getGuildManager() { return guildManager; }
     public TabManager getTabManager() { return tabManager; }
     public GuiManager getGuiManager() { return guiManager; }
     public Messages getMessages() { return messages; }
+    public ProxyBridge getBridge() { return bridge; }
     public boolean hasPapi() { return papi; }
     public Set<UUID> getChatToggled() { return chatToggled; }
 
@@ -99,13 +114,15 @@ public class MineStormGuilds extends JavaPlugin {
         if (g == null) return;
         String fmt = getConfig().getString("formats.guild-chat",
                 "&2Guild > &f%player% &b[%rank%]&f: %message%");
-        String msg = sender.hasPermission("minestormguilds.chat.color")
-                ? Msg.color(message) : message;
+        // players can never smuggle raw section signs; '&' colors need the permission
+        String clean = message.replace('\u00A7', ' ');
+        String msg = sender.hasPermission("minestormguilds.chat.color") ? Msg.color(clean) : clean;
         String out = Msg.color(
                 fmt.replace("%player%", sender.getName())
                    .replace("%rank%", g.getRank(sender.getUniqueId()))
                    .replace("%guild%", g.getName())
         ).replace("%message%", msg);
         broadcast(g, out);
+        if (bridge != null) bridge.sendChat(g.getName(), out);
     }
 }

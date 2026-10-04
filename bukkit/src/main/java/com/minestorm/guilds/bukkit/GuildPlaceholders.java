@@ -9,6 +9,7 @@ import java.util.UUID;
 public class GuildPlaceholders extends PlaceholderExpansion {
 
     private final MineStormGuilds plugin;
+
     public GuildPlaceholders(MineStormGuilds plugin) { this.plugin = plugin; }
 
     @Override public String getIdentifier() { return "minestormguilds"; }

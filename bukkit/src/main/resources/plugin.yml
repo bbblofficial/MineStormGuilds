@@ -1,7 +1,6 @@
 name: MineStormGuilds
 version: ${project.version}
 main: com.minestorm.guilds.bukkit.MineStormGuilds
-api-version: 1.8
 author: Muvixo
 description: Advanced Guild System by Muvixo
 softdepend: [PlaceholderAPI]
@@ -9,12 +8,14 @@ commands:
   guild:
     aliases: [g, minestormguilds]
     description: Guild command
+    usage: /<command> help
   gc:
     description: Guild chat
+    usage: /<command> <message>
   msga:
     aliases: [minestormguildsadmin]
-    description: MineStormGuilds admin command
-    permission: minestormguilds.admin
+    description: MineStormGuilds admin command (permissions are checked inside the plugin)
+    usage: /<command> help
 permissions:
   minestormguilds.admin:
     description: Full admin access

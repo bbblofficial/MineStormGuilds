@@ -2,7 +2,7 @@ package com.minestorm.guilds.bukkit;
 
 import com.minestorm.guilds.common.TabMode;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Shows the guild prefix in the tab list / above heads using scoreboard teams on the MAIN scoreboard.
+ * Team names are exactly 16 chars: "gld" + 6 hex (guild) + 2 digits (rank order) + 5 (player uuid).
+ */
 public class TabManager {
 
     private final MineStormGuilds plugin;
@@ -27,23 +31,36 @@ public class TabManager {
 
     private String teamName(Player p, Guild g) {
         int hash = g.getName().toLowerCase().hashCode() & 0xFFFFFF;
-        int idx = Math.min(g.rankIndex(p.getUniqueId()) + 1, 99);
+        int idx = Math.max(0, Math.min(g.rankIndex(p.getUniqueId()) + 1, 99));
         String u = p.getUniqueId().toString().replace("-", "").substring(0, 5);
         return "gld" + String.format("%06x", hash) + String.format("%02d", idx) + u;
+    }
+
+    private int maxLen() {
+        return Math.max(1, Math.min(64, plugin.getConfig().getInt("tab.max-prefix-length", 16)));
     }
 
     public String format(Player p, Guild g, String rank, TabMode mode, boolean usePapi) {
         if (mode == TabMode.NONE) return "";
         String raw = plugin.getConfig().getString("tab.formats." + mode.name(), mode.getDefaultFormat());
+        boolean hasN = raw.contains("%guild_name%");
+        boolean hasR = raw.contains("%guild_rank%");
         String n = g.getName();
         String r = rank;
+        int max = maxLen();
         String out = build(p, raw, g, n, r, usePapi);
-        while (out.length() > 16 && (n.length() > 1 || r.length() > 1)) {
-            if (n.length() >= r.length()) n = n.substring(0, n.length() - 1);
+        while (out.length() > max) {
+            boolean canN = hasN && n.length() > 1;
+            boolean canR = hasR && r.length() > 1;
+            if (!canN && !canR) break;
+            if (canN && (!canR || n.length() >= r.length())) n = n.substring(0, n.length() - 1);
             else r = r.substring(0, r.length() - 1);
             out = build(p, raw, g, n, r, usePapi);
         }
-        if (out.length() > 16) out = out.substring(0, 16);
+        if (out.length() > max) out = out.substring(0, max);
+        // never end on a dangling color char
+        if (!out.isEmpty() && out.charAt(out.length() - 1) == ChatColor.COLOR_CHAR)
+            out = out.substring(0, out.length() - 1);
         return out;
     }
 
@@ -70,7 +87,7 @@ public class TabManager {
         Team t = sb.getTeam(name);
         if (t == null) t = sb.registerNewTeam(name);
         t.setPrefix(prefix);
-        t.addPlayer((OfflinePlayer) p);
+        t.addEntry(p.getName());
         teams.put(p.getUniqueId(), name);
     }
 
@@ -89,8 +106,10 @@ public class TabManager {
     }
 
     private void unregister(Scoreboard sb, String name) {
-        try { Team t = sb.getTeam(name); if (t != null) t.unregister(); }
-        catch (IllegalStateException ignored) {}
+        try {
+            Team t = sb.getTeam(name);
+            if (t != null) t.unregister();
+        } catch (IllegalStateException ignored) {}
     }
 
     public void purgeStale() {

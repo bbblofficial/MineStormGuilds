@@ -25,9 +25,9 @@ import java.util.UUID;
 public class GuildCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = Arrays.asList(
-            "create","disband","invite","join","accept","chat","createrank","deleterank",
-            "ranks","promote","demote","leave","kick","list","info","transfer","color","tab",
-            "creator","help");
+            "create", "disband", "invite", "join", "accept", "chat", "createrank", "deleterank",
+            "ranks", "promote", "demote", "leave", "kick", "list", "info", "transfer", "color", "tab",
+            "creator", "help");
 
     private final MineStormGuilds plugin;
     private final GuildManager gm;
@@ -40,11 +40,13 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!(sender instanceof Player)) { sender.sendMessage(plugin.getMessages().raw("player-only")); return true; }
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(plugin.getMessages().raw("player-only"));
+            return true;
+        }
         Player p = (Player) sender;
 
         if (cmd.getName().equalsIgnoreCase("gc")) { chat(p, args, 0); return true; }
-
         if (args.length == 0) { help(p); return true; }
 
         String sub = args[0].toLowerCase();
@@ -83,6 +85,11 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         return g.isMaster(u) || Guild.OFFICER.equals(g.getRank(u));
     }
 
+    private boolean isFull(Guild g) {
+        int max = plugin.getConfig().getInt("settings.max-members", 50);
+        return max > 0 && g.size() >= max;
+    }
+
     private long ttl() {
         return plugin.getConfig().getInt("settings.invite-expire-seconds", 60) * 1000L;
     }
@@ -105,13 +112,11 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
     }
 
     private void help(Player p) {
-        Messages m = plugin.getMessages();
-        m.send(p, "admin-help-line", "args", "&f---");
         p.sendMessage(Msg.color("&b&m--------------- &f&lMineStorm &b&lGuilds &b&m---------------"));
         String[][] h = {
                 { "create <name>", "Create a guild" },
                 { "invite <player>", "Invite a player" },
-                { "join <guild>", "Accept an invite / request" },
+                { "join <guild>", "Accept an invite / send a request" },
                 { "accept <player>", "Accept a join request" },
                 { "chat <message>", "Guild chat (no message = toggle)" },
                 { "list", "Members and online status" },
@@ -141,7 +146,8 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         int max = plugin.getConfig().getInt("settings.name-max", 16);
         String name = a[1];
         if (!name.matches("[A-Za-z0-9_]+") || name.length() < min || name.length() > max) {
-            m.send(p, "name-invalid", "min", min, "max", max); return;
+            m.send(p, "name-invalid", "min", min, "max", max);
+            return;
         }
         if (gm.exists(name)) { m.send(p, "name-taken"); return; }
         Guild g = gm.createGuild(name, p);
@@ -183,6 +189,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (t == null) { m.send(p, "player-offline"); return; }
         if (t.equals(p)) { m.send(p, "cannot-invite-self"); return; }
         if (gm.getGuild(t.getUniqueId()) != null) { m.send(p, "player-already-in-guild"); return; }
+        if (isFull(g)) { m.send(p, "guild-full"); return; }
         if (gm.hasInvite(t.getUniqueId(), g)) { m.send(p, "invite-already-pending"); return; }
         gm.addInvite(t.getUniqueId(), g, ttl());
         plugin.broadcast(g, m.format("invite-sent", "target", "&b" + t.getName()));
@@ -199,6 +206,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (gm.getGuild(p.getUniqueId()) != null) { m.send(p, "already-in-guild"); return; }
         Guild g = gm.getGuildByName(a[1]);
         if (g == null) { m.send(p, "guild-not-found"); return; }
+        if (isFull(g)) { m.send(p, "guild-full"); return; }
         if (gm.hasInvite(p.getUniqueId(), g)) { addToGuild(g, p); return; }
         if (gm.hasRequest(g, p.getUniqueId())) { m.send(p, "request-already"); return; }
         gm.addRequest(g, p.getUniqueId(), ttl());
@@ -221,7 +229,12 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         Player t = Bukkit.getPlayerExact(a[1]);
         if (t == null) { m.send(p, "player-offline"); return; }
         if (!gm.hasRequest(g, t.getUniqueId())) { m.send(p, "request-none"); return; }
-        if (gm.getGuild(t.getUniqueId()) != null) { gm.clearRequests(t.getUniqueId()); m.send(p, "player-already-in-guild"); return; }
+        if (gm.getGuild(t.getUniqueId()) != null) {
+            gm.clearRequests(t.getUniqueId());
+            m.send(p, "player-already-in-guild");
+            return;
+        }
+        if (isFull(g)) { m.send(p, "guild-full"); return; }
         addToGuild(g, t);
     }
 
@@ -246,7 +259,8 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (!n.matches("[A-Za-z0-9_]{1,16}")) { m.send(p, "rank-name-invalid"); return; }
         if (g.findRank(n) != null) { m.send(p, "rank-exists"); return; }
         if (g.getRanks().size() >= plugin.getConfig().getInt("settings.max-ranks", 10)) { m.send(p, "rank-max"); return; }
-        g.addRank(n); gm.save();
+        g.addRank(n);
+        gm.save();
         m.send(p, "rank-created", "rank", "&b" + n);
     }
 
@@ -258,17 +272,17 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         String r = g.findRank(a[1]);
         if (r == null) { m.send(p, "rank-not-found"); return; }
         if (Guild.isDefaultRank(r)) { m.send(p, "rank-default-cannot-delete"); return; }
-        g.removeRank(r); gm.save();
+        g.removeRank(r);
+        gm.save();
         plugin.getTabManager().refreshGuild(g);
         plugin.broadcast(g, m.format("rank-deleted", "rank", "&b" + r));
     }
 
     private void ranks(Player p) {
-        Messages m = plugin.getMessages();
         Guild g = need(p); if (g == null) return;
         p.sendMessage(Msg.color("&b&m------------------------------------------"));
         p.sendMessage(Msg.color("&bGuild ranks &7(highest -> lowest)"));
-        p.sendMessage(Msg.color("&fGuild Master &7- &f" + countRank(g, "Guild Master") + " member(s)"));
+        p.sendMessage(Msg.color("&fGuild Master &7- &f" + countRank(g, Guild.MASTER_RANK) + " member(s)"));
         for (String r : g.getRanks())
             p.sendMessage(Msg.color("&b" + r + " &7- &f" + countRank(g, r) + " member(s)"));
         p.sendMessage(Msg.color("&b&m------------------------------------------"));
@@ -326,7 +340,8 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (t.equals(p.getUniqueId())) { m.send(p, "kick-self"); return; }
         if (g.isMaster(t)) { m.send(p, "kick-master"); return; }
         if (!g.isMaster(p.getUniqueId()) && g.rankIndex(t) <= g.rankIndex(p.getUniqueId())) {
-            m.send(p, "kick-lower-only"); return;
+            m.send(p, "kick-lower-only");
+            return;
         }
         String tn = g.getMemberName(t);
         plugin.broadcast(g, m.format("kick-success", "target", "&b" + tn, "player", "&b" + p.getName()));
@@ -342,14 +357,14 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(Msg.color("&b&m------------------------------------------"));
         p.sendMessage(Msg.color("&" + g.getColor() + g.getName() + " &b- Members (&f" + g.size() + "&b)"));
         List<String> order = new ArrayList<String>();
-        order.add("Guild Master");
+        order.add(Guild.MASTER_RANK);
         order.addAll(g.getRanks());
         for (String rank : order) {
             StringBuilder sb = new StringBuilder();
             for (UUID u : g.getMembers()) {
                 if (!g.getRank(u).equals(rank)) continue;
                 boolean on = Bukkit.getPlayer(u) != null;
-                sb.append(on ? "&f" : "&7").append(g.getMemberName(u)).append(on ? " &b " : " &c ");
+                sb.append(on ? "&a● &f" : "&c● &7").append(g.getMemberName(u)).append("  ");
             }
             if (sb.length() == 0) continue;
             p.sendMessage("");
@@ -364,15 +379,18 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         Guild g = need(p); if (g == null) return;
         int online = 0;
         for (UUID u : g.getMembers()) if (Bukkit.getPlayer(u) != null) online++;
-        p.sendMessage(Msg.color(m.raw("info-header").replace("%guild%", g.getColor() + g.getName())));
+        String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(g.getCreated()));
+        p.sendMessage(Msg.color(m.raw("info-header").replace("%guild%", "&" + g.getColor() + g.getName())));
         p.sendMessage(Msg.color(m.raw("info-master").replace("%master%", g.getMemberName(g.getMaster()))));
-        p.sendMessage(Msg.color(m.raw("info-members").replace("%count%", String.valueOf(g.size())).replace("%online%", String.valueOf(online))));
+        p.sendMessage(Msg.color(m.raw("info-members").replace("%count%", String.valueOf(g.size()))
+                .replace("%online%", String.valueOf(online))));
         p.sendMessage(Msg.color(m.raw("info-your-rank").replace("%rank%", g.getRank(p.getUniqueId()))));
-        p.sendMessage(Msg.color(m.raw("info-color").replace("%code%", "&" + g.getColor()).replace("%name%", GuiManager.colorName(g.getColor()))));
+        p.sendMessage(Msg.color(m.raw("info-color").replace("%code%", "&" + g.getColor())
+                .replace("%name%", GuiManager.colorName(g.getColor()))));
         p.sendMessage(Msg.color(m.raw("info-tab").replace("%mode%", g.getTabMode().getDisplay())));
-        p.sendMessage(Msg.color(m.raw("info-ranks").replace("%ranks%", "Guild Master, " + joinList(g.getRanks()))));
-        p.sendMessage(Msg.color(m.raw("info-created").replace("%date",
-                new SimpleDateFormat("yyyy-MM-dd").format(new Date(g.getCreated())))));
+        p.sendMessage(Msg.color(m.raw("info-ranks").replace("%ranks%",
+                Guild.MASTER_RANK + ", " + joinList(g.getRanks()))));
+        p.sendMessage(Msg.color(m.raw("info-created").replace("%date%", date)));
         p.sendMessage(Msg.color("&b&m------------------------------------------"));
     }
 

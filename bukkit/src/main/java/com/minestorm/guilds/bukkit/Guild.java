@@ -43,7 +43,9 @@ public class Guild {
     public long getCreated() { return created; }
 
     public char getColor() { return color; }
-    public void setColor(char c) { this.color = Character.toLowerCase(c); }
+    public void setColor(char c) {
+        if (Msg.isColorCode(c)) this.color = Character.toLowerCase(c);
+    }
 
     public TabMode getTabMode() { return tabMode; }
     public void setTabMode(TabMode m) { this.tabMode = m; }
@@ -85,6 +87,7 @@ public class Guild {
 
     public void setRank(UUID u, String rank) { memberRanks.put(u, rank); }
 
+    /** -1 for the master, 0 = highest custom/officer rank ... size-1 = Member. */
     public int rankIndex(UUID u) {
         String r = getRank(u);
         if (MASTER_RANK.equals(r)) return -1;

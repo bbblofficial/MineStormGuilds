@@ -5,13 +5,17 @@ settings:
   name-min: 3
   name-max: 16
   max-ranks: 10
+  # 0 = unlimited
+  max-members: 50
   invite-expire-seconds: 60
   suppress-public-join-quit: true
-  # Prefix shown in all plugin messages (also in messages.yml)
+  # Default color code of newly created guilds (0-9, a-f)
   default-color: a
 
 tab:
   enabled: true
+  # 16 is the limit for Minecraft 1.8-1.12 clients. Raise it (max 64) on 1.13+ only networks.
+  max-prefix-length: 16
   formats:
     NAME: "%guild_color%[%guild_name%] &f"
     RANK: "%guild_color%[%guild_rank%] &f"
@@ -25,6 +29,11 @@ formats:
 
 placeholders:
   no-guild: ""
+
+# Cross-server guild chat through the BungeeCord / Velocity plugin.
+# Requires a restart after changing.
+bridge:
+  enabled: false
 
 database:
   # file will be created in plugins/MineStormGuilds/

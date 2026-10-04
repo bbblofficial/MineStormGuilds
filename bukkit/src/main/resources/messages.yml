@@ -2,7 +2,7 @@
 # MineStormGuilds - Messages  |  Created by Muvixo
 # Placeholders: %player%, %guild%, %rank%, %color%, %code%,
 #               %master%, %seconds%, %count%, %name%, %target%
-# Color codes: use & (e.g. &b, &f, &#55FFFF for hex on 1.16+)
+# Color codes: use & (e.g. &b, &f)
 # ==========================================================
 # Aqua & White theme by default.
 
@@ -84,6 +84,7 @@ color-current: "%prefix%&eCurrent color: %code%%name%"
 tab-set: "%prefix%&eTab display set to &b%mode%&e."
 only-master-color: "%prefix%&cOnly the Guild Master can change the guild color."
 only-master-tab: "%prefix%&cOnly the Guild Master can change the tab display."
+invalid-color: "%prefix%&cInvalid color. Use one of: 0-9, a-f."
 
 # Chat
 chat-mode-on: "%prefix%&aGuild chat mode enabled. Use &b/g chat &aagain to disable it."
@@ -111,7 +112,7 @@ admin-color-set: "%prefix%&aColor of %guild% &aset to %code%%name%&a."
 admin-tab-set: "%prefix%&aTab of %guild% &aset to &b%mode%&a."
 admin-member-added: "%prefix%&aAdded %target% &ato %guild%&a."
 admin-member-removed: "%prefix%&cRemoved %target% &cfrom %guild%&c."
+admin-cannot-remove-master: "%prefix%&cThat player is the Guild Master. Delete the guild or transfer it first."
 admin-player-info: "%prefix%&f%player% &7-> &b%guild% &7(rank: &f%rank%&7)"
 admin-player-noguild: "%prefix%&f%player% &7is not in a guild."
 admin-player-removed: "%prefix%&cRemoved %player% &cfrom their guild."
-admin-help-line: "&b/msga %args% &7- &f%desc%"

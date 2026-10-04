@@ -5,7 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,16 +36,38 @@ public class GuiManager implements Listener {
 
     private static final char[] CODES = "0123456789abcdef".toCharArray();
     private static final String[] COLOR_NAMES = new String[]{
-            "Black","Dark Blue","Dark Green","Dark Aqua","Dark Red","Dark Purple","Gold","Gray",
-            "Dark Gray","Blue","Green","Aqua","Red","Light Purple","Yellow","White"};
+            "Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray",
+            "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"};
     private static final int[] RGB = new int[]{
-            0, 170, 43520, 43690, 11141120, 11141290, 16755200, 11184810,
-            5592405, 5592575, 5635925, 5636095, 16733525, 16733695, 16777045, 16777215};
+            0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xFFAA00, 0xAAAAAA,
+            0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF};
     private static final int[] TAB_SLOTS = new int[]{10, 12, 14, 16};
+
+    // Materials resolved by name so the same jar works on 1.8 (legacy names) and newer servers.
+    private static final Material NAME_TAG = mat("NAME_TAG");
+    private static final Material BARRIER = mat("BARRIER");
+    private static final Material PAPER = mat("PAPER");
+    private static final Material BOOK = mat("BOOK");
+    private static final Material WRITABLE_BOOK = mat("BOOK_AND_QUILL", "WRITABLE_BOOK");
+    private static final Material LEATHER_CHEST = mat("LEATHER_CHESTPLATE");
 
     private final MineStormGuilds plugin;
 
     public GuiManager(MineStormGuilds plugin) { this.plugin = plugin; }
+
+    private static Material mat(String... names) {
+        for (String n : names) {
+            Material m = Material.getMaterial(n);
+            if (m != null) return m;
+        }
+        return Material.STONE;
+    }
+
+    private static Enchantment glowEnchant() {
+        Enchantment e = Enchantment.getByName("DURABILITY");
+        if (e == null) e = Enchantment.getByName("UNBREAKING");
+        return e;
+    }
 
     public static String colorName(char code) {
         for (int i = 0; i < CODES.length; i++)
@@ -70,9 +91,15 @@ public class GuiManager implements Listener {
         p.openInventory(inv);
     }
 
+    private ItemStack filler() {
+        Material modern = Material.getMaterial("GRAY_STAINED_GLASS_PANE");
+        if (modern != null) return item(modern, 0, " ", null, false);
+        return item(mat("STAINED_GLASS_PANE"), 7, " ", null, false); // 1.8 - 1.12
+    }
+
     private void fill(Inventory inv) {
-        ItemStack filler = item(Material.STAINED_GLASS_PANE, 7, " ", null, false);
-        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, filler);
+        ItemStack f = filler();
+        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, f.clone());
     }
 
     private void populateColor(Inventory inv, Guild g) {
@@ -80,29 +107,30 @@ public class GuiManager implements Listener {
         List<String> cur = new ArrayList<String>();
         cur.add(Msg.color("&" + g.getColor() + g.getName()));
         cur.add(Msg.color("&7Color: &" + g.getColor() + colorName(g.getColor())));
-        inv.setItem(4, item(Material.NAME_TAG, 0, "&bCurrent guild color", cur, false));
+        inv.setItem(4, item(NAME_TAG, 0, "&bCurrent guild color", cur, false));
+        Enchantment glow = glowEnchant();
         for (int i = 0; i < 16; i++) {
             char c = CODES[i];
             boolean selected = Character.toLowerCase(g.getColor()) == c;
-            ItemStack it = new ItemStack(Material.LEATHER_CHESTPLATE);
-            LeatherArmorMeta meta = (LeatherArmorMeta) it.getItemMeta();
-            meta.setColor(Color.fromRGB(RGB[i]));
-            meta.setDisplayName(Msg.color("&" + c + COLOR_NAMES[i]));
+            ItemStack it = new ItemStack(LEATHER_CHEST);
+            ItemMeta raw = it.getItemMeta();
+            if (raw instanceof LeatherArmorMeta) ((LeatherArmorMeta) raw).setColor(Color.fromRGB(RGB[i]));
+            raw.setDisplayName(Msg.color("&" + c + COLOR_NAMES[i]));
             List<String> lore = new ArrayList<String>();
             lore.add(ChatColor.GRAY + "Code: " + ChatColor.WHITE + "&" + c);
             lore.add(Msg.color("&" + c + "The quick brown fox"));
             lore.add(" ");
             lore.add(Msg.color(selected ? "&bCurrently selected" : "&fClick to select"));
-            meta.setLore(lore);
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            if (selected) {
-                meta.addEnchant(Enchantment.DURABILITY, 1, true);
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            raw.setLore(lore);
+            raw.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            if (selected && glow != null) {
+                raw.addEnchant(glow, 1, true);
+                raw.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }
-            it.setItemMeta(meta);
+            it.setItemMeta(raw);
             inv.setItem(slotForColor(i), it);
         }
-        inv.setItem(31, item(Material.BARRIER, 0, "&cClose", null, false));
+        inv.setItem(31, item(BARRIER, 0, "&cClose", null, false));
     }
 
     private void populateTab(Inventory inv, Guild g, Player viewer) {
@@ -114,7 +142,7 @@ public class GuiManager implements Listener {
         help.add(ChatColor.WHITE + "%guild_rank%");
         help.add(ChatColor.WHITE + "%guild_color%");
         help.add(Msg.color("&7+ any PlaceholderAPI placeholder"));
-        inv.setItem(4, item(Material.BOOK_AND_QUILL, 0, "&bWhat is shown in the tab list?", help, false));
+        inv.setItem(4, item(WRITABLE_BOOK, 0, "&bWhat is shown in the tab list?", help, false));
 
         TabMode[] modes = TabMode.values();
         for (int i = 0; i < modes.length && i < TAB_SLOTS.length; i++) {
@@ -129,12 +157,12 @@ public class GuiManager implements Listener {
             lore.add(m == TabMode.NONE ? Msg.color("&8(no guild prefix)") : (prefix + viewer.getName()));
             lore.add(" ");
             lore.add(Msg.color(selected ? "&bCurrently selected" : "&fClick to select"));
-            Material icon = m == TabMode.NONE ? Material.BARRIER :
-                    m == TabMode.NAME ? Material.NAME_TAG :
-                    m == TabMode.RANK ? Material.PAPER : Material.BOOK;
+            Material icon = m == TabMode.NONE ? BARRIER :
+                    m == TabMode.NAME ? NAME_TAG :
+                    m == TabMode.RANK ? PAPER : BOOK;
             inv.setItem(TAB_SLOTS[i], item(icon, 0, "&b" + m.getDisplay(), lore, selected));
         }
-        inv.setItem(22, item(Material.BARRIER, 0, "&cClose", null, false));
+        inv.setItem(22, item(BARRIER, 0, "&cClose", null, false));
     }
 
     private int slotForColor(int i) { return i < 8 ? 9 + i : 18 + i - 8; }
@@ -145,14 +173,16 @@ public class GuiManager implements Listener {
         return -1;
     }
 
+    @SuppressWarnings("deprecation")
     private ItemStack item(Material m, int data, String name, List<String> lore, boolean glow) {
-        ItemStack it = new ItemStack(m, 1, (short) data);
+        ItemStack it = data == 0 ? new ItemStack(m) : new ItemStack(m, 1, (short) data);
         ItemMeta meta = it.getItemMeta();
         meta.setDisplayName(Msg.color(name));
         if (lore != null) meta.setLore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        if (glow) {
-            meta.addEnchant(Enchantment.DURABILITY, 1, true);
+        Enchantment ench = glow ? glowEnchant() : null;
+        if (ench != null) {
+            meta.addEnchant(ench, 1, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }
         it.setItemMeta(meta);

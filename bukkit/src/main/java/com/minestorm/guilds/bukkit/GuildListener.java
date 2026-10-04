@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class GuildListener implements Listener {
 
     private final MineStormGuilds plugin;
+
     public GuildListener(MineStormGuilds plugin) { this.plugin = plugin; }
 
     private boolean suppress() {
@@ -39,6 +40,8 @@ public class GuildListener implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
         plugin.getChatToggled().remove(p.getUniqueId());
+        plugin.getGuildManager().clearInvites(p.getUniqueId());
+        plugin.getGuildManager().clearRequests(p.getUniqueId());
         Guild g = plugin.getGuildManager().getGuild(p.getUniqueId());
         plugin.getTabManager().remove(p);
         if (g == null) return;
@@ -59,6 +62,7 @@ public class GuildListener implements Listener {
         final Player p = e.getPlayer();
         if (!plugin.getChatToggled().contains(p.getUniqueId())) return;
         e.setCancelled(true);
+        e.getRecipients().clear(); // also protects against plugins that ignore the cancelled flag
         final String msg = e.getMessage();
         Bukkit.getScheduler().runTask(plugin, new Runnable() {
             @Override public void run() {

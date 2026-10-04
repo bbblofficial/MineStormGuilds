@@ -15,12 +15,6 @@ public final class Msg {
         return ChatColor.stripColor(color(s));
     }
 
-    public static String repeat(String s, int n) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++) sb.append(s);
-        return sb.toString();
-    }
-
     public static String join(String[] a, int from) {
         StringBuilder sb = new StringBuilder();
         for (int i = from; i < a.length; i++) {
@@ -28,5 +22,9 @@ public final class Msg {
             sb.append(a[i]);
         }
         return sb.toString();
+    }
+
+    public static boolean isColorCode(char c) {
+        return "0123456789abcdef".indexOf(Character.toLowerCase(c)) >= 0;
     }
 }

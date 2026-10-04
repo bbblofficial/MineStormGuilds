@@ -7,23 +7,35 @@
 ```bash
 mvn clean package
 ```
-Artifacts land in:
-- `bukkit/target/MineStormGuilds-Bukkit-<version>.jar`  (Spigot/Paper/Bukkit)
-- `bungee/target/MineStormGuilds-Bungee-<version>.jar`  (BungeeCord proxy)
-- `velocity/target/MineStormGuilds-Velocity-<version>.jar` (Velocity proxy, JDK 17+)
+Artifacts:
+- `bukkit/target/MineStormGuilds-Bukkit-<version>.jar`   (Spigot/Paper/Bukkit)
+- `bungee/target/MineStormGuilds-Bungee-<version>.jar`   (BungeeCord proxy)
+- `velocity/target/MineStormGuilds-Velocity-<version>.jar` (Velocity proxy, built only on JDK 17+)
 
 ## Install
-1. Drop the **Bukkit** jar in each backend `plugins/` folder.
-2. Drop the **Bungee** or **Velocity** jar in the proxy `plugins/` folder.
+1. Put the **Bukkit** jar in each backend `plugins/` folder.
+2. (Optional, only for cross-server guild chat) put the **Bungee** or **Velocity** jar in the proxy
+   `plugins/` folder and set `bridge.enabled: true` in the Bukkit `config.yml`.
 3. Restart. Data is stored in `plugins/MineStormGuilds/guilds.db` (SQLite).
 
 ## Commands
 ### Player
-`/guild` (alias `/g`, `/minestormguilds`) — create, invite, join, chat, ranks, GUI…
+`/guild` (aliases `/g`, `/minestormguilds`) — create, invite, join, chat, ranks, GUI...
+`/gc <message>` — guild chat.
 ### Admin (`/msga`)
-- OP players bypass permission. Non‑OPs need `minestormguilds.admin`.
-- Also granular perms: `minestormguilds.admin.reload`, `.guild.create`, `.guild.delete`,
-  `.guild.color`, `.guild.tab`, `.guild.member.add`, `.guild.member.remove`, `.player.info`.
+- OP players bypass permission checks. Non-OPs need `minestormguilds.admin`
+  or the granular nodes: `minestormguilds.admin.reload`, `.guild.create`, `.guild.delete`,
+  `.guild.color`, `.guild.tab`, `.guild.member.add`, `.guild.member.remove`,
+  `.player.info`, `.player.remove`.
+
+## Placeholders (PlaceholderAPI)
+`%minestormguilds_name%`, `_name_colored`, `_rank`, `_color`, `_color_code`, `_prefix`,
+`_tab`, `_master`, `_members`, `_online`, `_has`
+
+## Notes
+- The tab prefix is applied through the **main scoreboard** teams. Plugins that give each player
+  a private scoreboard may hide it.
+- Guild data is local to each backend (SQLite). The proxy bridge only relays guild chat.
 
 ## Creator
 ```

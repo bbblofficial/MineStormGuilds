@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.minestorm.guilds</groupId>
     <artifactId>minestormguilds-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
   <artifactId>minestormguilds-bungee</artifactId>
   <name>MineStormGuilds-Bungee</name>
@@ -17,13 +17,6 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>bungeecord-repo</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-  </repositories>
 
   <build>
     <finalName>MineStormGuilds-Bungee-${project.version}</finalName>
