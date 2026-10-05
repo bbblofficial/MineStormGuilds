@@ -25,7 +25,6 @@ permissions:
       minestormguilds.admin.guild.create: true
       minestormguilds.admin.guild.delete: true
       minestormguilds.admin.guild.color: true
-      minestormguilds.admin.guild.tab: true
       minestormguilds.admin.guild.member.add: true
       minestormguilds.admin.guild.member.remove: true
       minestormguilds.admin.player.info: true
@@ -38,8 +37,6 @@ permissions:
     default: op
   minestormguilds.admin.guild.color:
     default: op
-  minestormguilds.admin.guild.tab:
-    default: op
   minestormguilds.admin.guild.member.add:
     default: op
   minestormguilds.admin.guild.member.remove:
@@ -49,8 +46,6 @@ permissions:
   minestormguilds.admin.player.remove:
     default: op
   minestormguilds.color:
-    default: true
-  minestormguilds.tab:
     default: true
   minestormguilds.create:
     default: true

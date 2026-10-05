@@ -17,16 +17,6 @@ settings:
   bypass-limits-for-op: true
   bypass-limits-permission: "minestormguilds.bypass.limits"
 
-tab:
-  enabled: true
-  # 16 is the limit for Minecraft 1.8-1.12 clients. Raise it (max 64) on 1.13+ only networks.
-  max-prefix-length: 16
-  formats:
-    NAME: "%guild_color%[%guild_name%] &f"
-    RANK: "%guild_color%[%guild_rank%] &f"
-    NAME_RANK: "%guild_color%[%guild_name%|%guild_rank%] &f"
-    NONE: ""
-
 formats:
   member-join: "&2Guild > &a%player% &ejoined the Server!"
   member-quit: "&2Guild > &a%player% &eleft the Server!"

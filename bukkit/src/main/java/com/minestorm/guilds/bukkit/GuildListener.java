@@ -29,7 +29,6 @@ public class GuildListener implements Listener {
             g.setMemberName(p.getUniqueId(), p.getName());
             plugin.getGuildManager().save();
         }
-        plugin.getTabManager().apply(p);
         if (suppress()) e.setJoinMessage(null);
         String fmt = plugin.getConfig().getString("formats.member-join",
                 "&2Guild > &a%player% &ejoined the Server!");
@@ -43,7 +42,6 @@ public class GuildListener implements Listener {
         plugin.getGuildManager().clearInvites(p.getUniqueId());
         plugin.getGuildManager().clearRequests(p.getUniqueId());
         Guild g = plugin.getGuildManager().getGuild(p.getUniqueId());
-        plugin.getTabManager().remove(p);
         if (g == null) return;
         if (suppress()) e.setQuitMessage(null);
         String fmt = plugin.getConfig().getString("formats.member-quit",

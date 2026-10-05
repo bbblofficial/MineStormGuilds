@@ -65,9 +65,6 @@ public class GuildCacheRefresher implements Runnable {
                     return;
                 }
                 if (result != GuildManager.REFRESH_APPLIED) return;
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    plugin.getTabManager().apply(p);
-                }
             }
         });
     }

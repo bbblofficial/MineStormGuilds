@@ -26,7 +26,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = Arrays.asList(
             "create", "disband", "invite", "join", "accept", "chat", "createrank", "deleterank",
-            "ranks", "promote", "demote", "leave", "kick", "list", "info", "transfer", "color", "tab",
+            "ranks", "promote", "demote", "leave", "kick", "list", "info", "transfer", "color",
             "creator", "help");
 
     private final MineStormGuilds plugin;
@@ -66,8 +66,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         else if (sub.equals("list") || sub.equals("members")) list(p);
         else if (sub.equals("info")) info(p);
         else if (sub.equals("transfer")) transfer(p, args);
-        else if (sub.equals("color") || sub.equals("colour")) openGui(p, true);
-        else if (sub.equals("tab")) openGui(p, false);
+        else if (sub.equals("color") || sub.equals("colour")) openColorGui(p);
         else if (sub.equals("creator")) p.sendMessage(plugin.getMessages().raw("creator"));
         else if (sub.equals("help")) help(p);
         else plugin.getMessages().send(p, "unknown-command");
@@ -140,7 +139,6 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
                 { "kick <player>", "Kick a member" },
                 { "transfer <player>", "Give the guild to a member (Master)" },
                 { "color", "Open guild color GUI (Master)" },
-                { "tab", "Open tab settings GUI (Master)" },
                 { "leave", "Leave your guild" },
                 { "disband", "Disband your guild (Master)" },
                 { "creator", "Show plugin author" }
@@ -437,17 +435,15 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
                 "target", "&b" + g.getMemberName(t)));
     }
 
-    private void openGui(Player p, boolean color) {
+    private void openColorGui(Player p) {
         Messages m = plugin.getMessages();
         Guild g = need(p); if (g == null) return;
-        String perm = color ? "minestormguilds.color" : "minestormguilds.tab";
-        if (!p.hasPermission(perm)) { m.send(p, "no-permission"); return; }
+        if (!p.hasPermission("minestormguilds.color")) { m.send(p, "no-permission"); return; }
         if (!g.isMaster(p.getUniqueId())) {
-            m.send(p, color ? "only-master-color" : "only-master-tab");
+            m.send(p, "only-master-color");
             return;
         }
-        if (color) plugin.getGuiManager().openColor(p, g);
-        else plugin.getGuiManager().openTab(p, g);
+        plugin.getGuiManager().openColor(p, g);
     }
 
     @Override

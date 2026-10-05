@@ -33,8 +33,6 @@ Artifacts:
 `_tab`, `_master`, `_members`, `_online`, `_has`
 
 ## Notes
-- The tab prefix is applied through the **main scoreboard** teams. Plugins that give each player
-  a private scoreboard may hide it.
 - Guild data is local to each backend (SQLite). The proxy bridge only relays guild chat.
 
 ## Creator

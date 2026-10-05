@@ -36,7 +36,6 @@ public class GuildPlaceholders extends PlaceholderExpansion {
         if (key.equals("color")) return Msg.color(col);
         if (key.equals("color_code")) return String.valueOf(g.getColor());
         if (key.equals("prefix")) return Msg.color(col + "[" + g.getName() + "]");
-        if (key.equals("tab")) return plugin.getTabManager().format(p, g, g.getRank(p.getUniqueId()), g.getTabMode(), false);
         if (key.equals("master")) return g.getMemberName(g.getMaster());
         if (key.equals("members")) return String.valueOf(g.size());
         if (key.equals("has")) return "true";

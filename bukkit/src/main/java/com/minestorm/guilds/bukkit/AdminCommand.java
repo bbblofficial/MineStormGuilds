@@ -1,6 +1,5 @@
 package com.minestorm.guilds.bukkit;
 
-import com.minestorm.guilds.common.TabMode;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -30,7 +29,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             "minestormguilds.admin.guild.create",
             "minestormguilds.admin.guild.delete",
             "minestormguilds.admin.guild.color",
-            "minestormguilds.admin.guild.tab",
             "minestormguilds.admin.guild.member.add",
             "minestormguilds.admin.guild.member.remove",
             "minestormguilds.admin.player.info",
@@ -160,22 +158,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (op.equals("tab")) {
-            if (!has(s, "minestormguilds.admin.guild.tab")) { m.send(s, "no-permission"); return true; }
-            if (args.length < 4) { m.send(s, "invalid-usage", "usage", "/msga guild tab <name> <" + join(TabMode.values()) + ">"); return true; }
-            Guild g = gm.getGuildByName(args[2]);
-            if (g == null) { m.send(s, "admin-guild-not-found", "guild", args[2]); return true; }
-            try {
-                TabMode mode = TabMode.valueOf(args[3].toUpperCase());
-                g.setTabMode(mode);
-                gm.save();
-                plugin.getTabManager().refreshGuild(g);
-                m.send(s, "admin-tab-set", "guild", "&b" + g.getName(), "mode", mode.getDisplay());
-            } catch (IllegalArgumentException ex) {
-                m.send(s, "invalid-usage", "usage", "TabMode: " + join(TabMode.values()));
-            }
-            return true;
-        }
 
         if (op.equals("addmember")) {
             if (!has(s, "minestormguilds.admin.guild.member.add")) { m.send(s, "no-permission"); return true; }
@@ -279,14 +261,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(Msg.color("&b&m------------------------------------------"));
     }
 
-    private String join(TabMode[] modes) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < modes.length; i++) {
-            if (i > 0) sb.append("|");
-            sb.append(modes[i].name());
-        }
-        return sb.toString();
-    }
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {

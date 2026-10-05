@@ -200,7 +200,6 @@ public class Database {
                     " name VARCHAR(32) UNIQUE NOT NULL," +
                     " master_uuid VARCHAR(36) NOT NULL," +
                     " color VARCHAR(1) NOT NULL DEFAULT 'a'," +
-                    " tab_mode VARCHAR(16) NOT NULL DEFAULT 'NAME'," +
                     " created BIGINT NOT NULL" +
                     ")" + suffix
             );
@@ -234,7 +233,6 @@ public class Database {
 
         // columns that older versions of the plugin did not have
         addColumnIfMissing(c, "guilds", "color", "VARCHAR(1) NOT NULL DEFAULT 'a'");
-        addColumnIfMissing(c, "guilds", "tab_mode", "VARCHAR(16) NOT NULL DEFAULT 'NAME'");
         addColumnIfMissing(c, "guilds", "created", "BIGINT NOT NULL DEFAULT 0");
         addColumnIfMissing(c, "members", "name", "VARCHAR(16) NOT NULL DEFAULT 'Unknown'");
         addColumnIfMissing(c, "members", "joined", "BIGINT NOT NULL DEFAULT 0");

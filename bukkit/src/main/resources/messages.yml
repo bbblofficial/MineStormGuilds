@@ -81,9 +81,7 @@ transfer-self: "%prefix%&cYou are already the Guild Master."
 # Color / Tab
 color-set: "%prefix%&eThe guild color is now %code%%name%&e!"
 color-current: "%prefix%&eCurrent color: %code%%name%"
-tab-set: "%prefix%&eTab display set to &b%mode%&e."
 only-master-color: "%prefix%&cOnly the Guild Master can change the guild color."
-only-master-tab: "%prefix%&cOnly the Guild Master can change the tab display."
 invalid-color: "%prefix%&cInvalid color. Use one of: 0-9, a-f."
 
 # Chat
@@ -97,7 +95,6 @@ info-master: "&bGuild Master: &f%master%"
 info-members: "&bMembers: &f%count% &7(&a%online% online&7)"
 info-your-rank: "&bYour rank: &f%rank%"
 info-color: "&bColor: %code%%name%"
-info-tab: "&bTab display: &f%mode%"
 info-ranks: "&bRanks: &f%ranks%"
 info-created: "&bCreated: &f%date%"
 list-header: "&b&m------------------&f %guild% &b&m------------------"

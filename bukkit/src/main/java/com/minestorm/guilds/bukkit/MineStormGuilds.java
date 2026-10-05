@@ -12,7 +12,6 @@ import java.util.UUID;
 public class MineStormGuilds extends JavaPlugin {
 
     private GuildManager guildManager;
-    private TabManager tabManager;
     private GuiManager guiManager;
     private Messages messages;
     private ProxyBridge bridge;
@@ -33,7 +32,6 @@ public class MineStormGuilds extends JavaPlugin {
         guildManager = new GuildManager(this);
         guildManager.load();
 
-        tabManager = new TabManager(this);
         guiManager = new GuiManager(this);
         bridge = new ProxyBridge(this);
         bridge.enable();
@@ -51,8 +49,6 @@ public class MineStormGuilds extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(guiManager, this);
 
         hookPapi();
-        tabManager.purgeStale();
-        for (Player p : Bukkit.getOnlinePlayers()) tabManager.apply(p);
 
         refresher = new GuildCacheRefresher(this);
         refresher.start();
@@ -71,7 +67,6 @@ public class MineStormGuilds extends JavaPlugin {
             guildManager.save();
             guildManager.close();
         }
-        if (tabManager != null) tabManager.purgeStale();
     }
 
     private void hookPapi() {
@@ -91,12 +86,9 @@ public class MineStormGuilds extends JavaPlugin {
         ConfigMerger.mergeAll(this);
         reloadConfig();
         messages.load();
-        tabManager.purgeStale();
-        for (Player p : Bukkit.getOnlinePlayers()) tabManager.apply(p);
     }
 
     public GuildManager getGuildManager() { return guildManager; }
-    public TabManager getTabManager() { return tabManager; }
     public GuiManager getGuiManager() { return guiManager; }
     public Messages getMessages() { return messages; }
     public ProxyBridge getBridge() { return bridge; }

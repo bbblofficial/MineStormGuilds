@@ -1,6 +1,5 @@
 package com.minestorm.guilds.bukkit;
 
-import com.minestorm.guilds.common.TabMode;
 import org.bukkit.entity.Player;
 
 import java.sql.Connection;
@@ -211,7 +210,7 @@ public class GuildManager {
 
             try (Statement st = c.createStatement();
                  ResultSet rs = st.executeQuery(
-                         "SELECT id, name, master_uuid, color, tab_mode, created FROM guilds")) {
+                         "SELECT id, name, master_uuid, color, created FROM guilds")) {
                 while (rs.next()) {
                     String name = rs.getString("name");
                     UUID master;

@@ -1,6 +1,5 @@
 package com.minestorm.guilds.bukkit;
 
-import com.minestorm.guilds.common.TabMode;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -23,7 +22,7 @@ import java.util.List;
 
 public class GuiManager implements Listener {
 
-    public enum Type { COLOR, TAB }
+    public enum Type { COLOR }
 
     public static class GuiHolder implements InventoryHolder {
         private final Type type;
@@ -41,14 +40,10 @@ public class GuiManager implements Listener {
     private static final int[] RGB = new int[]{
             0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xFFAA00, 0xAAAAAA,
             0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF};
-    private static final int[] TAB_SLOTS = new int[]{10, 12, 14, 16};
 
     // Materials resolved by name so the same jar works on 1.8 (legacy names) and newer servers.
     private static final Material NAME_TAG = mat("NAME_TAG");
     private static final Material BARRIER = mat("BARRIER");
-    private static final Material PAPER = mat("PAPER");
-    private static final Material BOOK = mat("BOOK");
-    private static final Material WRITABLE_BOOK = mat("BOOK_AND_QUILL", "WRITABLE_BOOK");
     private static final Material LEATHER_CHEST = mat("LEATHER_CHESTPLATE");
 
     private final MineStormGuilds plugin;
@@ -83,13 +78,6 @@ public class GuiManager implements Listener {
         p.openInventory(inv);
     }
 
-    public void openTab(Player p, Guild g) {
-        GuiHolder holder = new GuiHolder(Type.TAB);
-        Inventory inv = Bukkit.createInventory(holder, 27, Msg.color("&8MineStormGuilds - Tab"));
-        holder.setInventory(inv);
-        populateTab(inv, g, p);
-        p.openInventory(inv);
-    }
 
     private ItemStack filler() {
         Material modern = Material.getMaterial("GRAY_STAINED_GLASS_PANE");
@@ -133,37 +121,6 @@ public class GuiManager implements Listener {
         inv.setItem(31, item(BARRIER, 0, "&cClose", null, false));
     }
 
-    private void populateTab(Inventory inv, Guild g, Player viewer) {
-        fill(inv);
-        List<String> help = new ArrayList<String>();
-        help.add(Msg.color("&7Placeholders usable in the formats"));
-        help.add(Msg.color("&7(see tab.formats in config.yml):"));
-        help.add(ChatColor.WHITE + "%guild_name%");
-        help.add(ChatColor.WHITE + "%guild_rank%");
-        help.add(ChatColor.WHITE + "%guild_color%");
-        help.add(Msg.color("&7+ any PlaceholderAPI placeholder"));
-        inv.setItem(4, item(WRITABLE_BOOK, 0, "&bWhat is shown in the tab list?", help, false));
-
-        TabMode[] modes = TabMode.values();
-        for (int i = 0; i < modes.length && i < TAB_SLOTS.length; i++) {
-            TabMode m = modes[i];
-            boolean selected = g.getTabMode() == m;
-            String raw = plugin.getConfig().getString("tab.formats." + m.name(), m.getDefaultFormat());
-            String prefix = plugin.getTabManager().format(viewer, g, g.getRank(viewer.getUniqueId()), m, true);
-            List<String> lore = new ArrayList<String>();
-            lore.add(Msg.color("&7Format:"));
-            lore.add(ChatColor.WHITE + (raw.isEmpty() ? "(empty)" : raw));
-            lore.add(Msg.color("&7Preview:"));
-            lore.add(m == TabMode.NONE ? Msg.color("&8(no guild prefix)") : (prefix + viewer.getName()));
-            lore.add(" ");
-            lore.add(Msg.color(selected ? "&bCurrently selected" : "&fClick to select"));
-            Material icon = m == TabMode.NONE ? BARRIER :
-                    m == TabMode.NAME ? NAME_TAG :
-                    m == TabMode.RANK ? PAPER : BOOK;
-            inv.setItem(TAB_SLOTS[i], item(icon, 0, "&b" + m.getDisplay(), lore, selected));
-        }
-        inv.setItem(22, item(BARRIER, 0, "&cClose", null, false));
-    }
 
     private int slotForColor(int i) { return i < 8 ? 9 + i : 18 + i - 8; }
 
@@ -205,29 +162,15 @@ public class GuiManager implements Listener {
             plugin.getMessages().send(p, "no-permission");
             return;
         }
-        if (holder.getType() == Type.COLOR) {
-            if (slot == 31) { p.closeInventory(); return; }
-            int idx = colorForSlot(slot);
-            if (idx < 0) return;
-            g.setColor(CODES[idx]);
-            plugin.getGuildManager().save();
-            plugin.getTabManager().refreshGuild(g);
-            populateColor(top, g);
-            plugin.broadcast(g, plugin.getMessages().format("color-set",
-                    "code", "&" + CODES[idx], "name", COLOR_NAMES[idx]));
-        } else {
-            if (slot == 22) { p.closeInventory(); return; }
-            TabMode[] modes = TabMode.values();
-            for (int i = 0; i < TAB_SLOTS.length && i < modes.length; i++) {
-                if (TAB_SLOTS[i] != slot) continue;
-                g.setTabMode(modes[i]);
-                plugin.getGuildManager().save();
-                plugin.getTabManager().refreshGuild(g);
-                populateTab(top, g, p);
-                plugin.broadcast(g, plugin.getMessages().format("tab-set", "mode", modes[i].getDisplay()));
-                return;
-            }
-        }
+        if (holder.getType() != Type.COLOR) return;
+        if (slot == 31) { p.closeInventory(); return; }
+        int idx = colorForSlot(slot);
+        if (idx < 0) return;
+        g.setColor(CODES[idx]);
+        plugin.getGuildManager().save();
+        populateColor(top, g);
+        plugin.broadcast(g, plugin.getMessages().format("color-set",
+                "code", "&" + CODES[idx], "name", COLOR_NAMES[idx]));
     }
 
     @EventHandler
