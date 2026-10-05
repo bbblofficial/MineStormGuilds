@@ -51,19 +51,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         return false;
     }
 
-    /**
-     * Console, OP, minestormguilds.admin and minestormguilds.bypass.limits
-     * ignore every min/max limit (guild name length, members, ranks).
-     */
-    private boolean bypassLimits(CommandSender s) {
-        if (!(s instanceof Player)) return true; // console
-        Player p = (Player) s;
-        if (plugin.getConfig().getBoolean("settings.bypass-limits-for-op", true) && p.isOp()) return true;
-        if (p.hasPermission("minestormguilds.admin")) return true;
-        String perm = plugin.getConfig().getString("settings.bypass-limits-permission", "minestormguilds.bypass.limits");
-        return perm != null && !perm.isEmpty() && p.hasPermission(perm);
-    }
-
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         Messages m = plugin.getMessages();

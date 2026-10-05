@@ -85,9 +85,22 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         return g.isMaster(u) || Guild.OFFICER.equals(g.getRank(u));
     }
 
-    private boolean isFull(Guild g) {
+    private boolean isFull(Guild g, Player actor) {
+        if (bypassLimits(actor)) return false;
         int max = plugin.getConfig().getInt("settings.max-members", 50);
         return max > 0 && g.size() >= max;
+    }
+
+    /**
+     * OP players (unless settings.bypass-limits-for-op is false) and holders of
+     * settings.bypass-limits-permission ignore every min/max limit:
+     * guild name length, member count and rank count.
+     */
+    private boolean bypassLimits(Player p) {
+        if (p == null) return false;
+        if (plugin.getConfig().getBoolean("settings.bypass-limits-for-op", true) && p.isOp()) return true;
+        String perm = plugin.getConfig().getString("settings.bypass-limits-permission", "minestormguilds.bypass.limits");
+        return perm != null && !perm.isEmpty() && p.hasPermission(perm);
     }
 
     private long ttl() {
@@ -145,7 +158,9 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         int min = plugin.getConfig().getInt("settings.name-min", 3);
         int max = plugin.getConfig().getInt("settings.name-max", 16);
         String name = a[1];
-        if (!name.matches("[A-Za-z0-9_]+") || name.length() < min || name.length() > max) {
+        boolean badChars  = !name.matches("[A-Za-z0-9_]+");
+        boolean badLength = !bypassLimits(p) && (name.length() < min || name.length() > max);
+        if (badChars || badLength) {
             m.send(p, "name-invalid", "min", min, "max", max);
             return;
         }
@@ -193,7 +208,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (t == null) { m.send(p, "player-offline"); return; }
         if (t.equals(p)) { m.send(p, "cannot-invite-self"); return; }
         if (gm.getGuild(t.getUniqueId()) != null) { m.send(p, "player-already-in-guild"); return; }
-        if (isFull(g)) { m.send(p, "guild-full"); return; }
+        if (isFull(g, p)) { m.send(p, "guild-full"); return; }
         if (gm.hasInvite(t.getUniqueId(), g)) { m.send(p, "invite-already-pending"); return; }
         gm.addInvite(t.getUniqueId(), g, ttl());
         plugin.broadcast(g, m.format("invite-sent", "target", "&b" + t.getName()));
@@ -210,7 +225,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         if (gm.getGuild(p.getUniqueId()) != null) { m.send(p, "already-in-guild"); return; }
         Guild g = gm.getGuildByName(a[1]);
         if (g == null) { m.send(p, "guild-not-found"); return; }
-        if (isFull(g)) { m.send(p, "guild-full"); return; }
+        if (isFull(g, p)) { m.send(p, "guild-full"); return; }
         if (gm.hasInvite(p.getUniqueId(), g)) { addToGuild(g, p); return; }
         if (gm.hasRequest(g, p.getUniqueId())) { m.send(p, "request-already"); return; }
         gm.addRequest(g, p.getUniqueId(), ttl());
@@ -238,7 +253,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
             m.send(p, "player-already-in-guild");
             return;
         }
-        if (isFull(g)) { m.send(p, "guild-full"); return; }
+        if (isFull(g, p)) { m.send(p, "guild-full"); return; }
         addToGuild(g, t);
     }
 

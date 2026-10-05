@@ -11,6 +11,11 @@ settings:
   suppress-public-join-quit: true
   # Default color code of newly created guilds (0-9, a-f)
   default-color: a
+  # OP players (unless you set bypass-limits-for-op to false) and holders of
+  # bypass-limits-permission ignore every min/max limit above:
+  #   name-min, name-max, max-members, max-ranks
+  bypass-limits-for-op: true
+  bypass-limits-permission: "minestormguilds.bypass.limits"
 
 tab:
   enabled: true
