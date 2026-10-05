@@ -1,5 +1,7 @@
 package com.minestorm.guilds.bukkit;
 
+import com.minestorm.guilds.common.TabMode;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +21,7 @@ public class Guild {
     private final String name;
     private UUID master;
     private char color = 'a';
+    private TabMode tabMode = TabMode.NAME;
     private final long created;
 
     private final Map<UUID, String> memberRanks = new LinkedHashMap<UUID, String>();
@@ -41,6 +44,8 @@ public class Guild {
     public long getCreated() { return created; }
 
     public char getColor() { return color; }
+    public TabMode getTabMode() { return tabMode; }
+    public void setTabMode(TabMode m) { this.tabMode = m; }
     public void setColor(char c) {
         if (Msg.isColorCode(c)) this.color = Character.toLowerCase(c);
     }

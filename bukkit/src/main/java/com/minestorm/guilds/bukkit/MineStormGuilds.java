@@ -12,6 +12,7 @@ import java.util.UUID;
 public class MineStormGuilds extends JavaPlugin {
 
     private GuildManager guildManager;
+    private TabManager tabManager;
     private GuiManager guiManager;
     private Messages messages;
     private ProxyBridge bridge;
@@ -30,6 +31,7 @@ public class MineStormGuilds extends JavaPlugin {
         messages.load();
 
         guildManager = new GuildManager(this);
+        tabManager = new TabManager(this);
         guildManager.load();
 
         guiManager = new GuiManager(this);
@@ -89,6 +91,7 @@ public class MineStormGuilds extends JavaPlugin {
     }
 
     public GuildManager getGuildManager() { return guildManager; }
+    public TabManager getTabManager() { return tabManager; }
     public GuiManager getGuiManager() { return guiManager; }
     public Messages getMessages() { return messages; }
     public ProxyBridge getBridge() { return bridge; }
