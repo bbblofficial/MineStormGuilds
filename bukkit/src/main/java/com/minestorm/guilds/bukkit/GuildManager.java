@@ -172,8 +172,7 @@ public class GuildManager {
         StringBuilder sb = new StringBuilder();
         sb.append(g.getName()).append('|')
           .append(g.getMaster()).append('|')
-          .append(g.getColor()).append('|')
-          .append(g.getTabMode() == null ? "" : g.getTabMode().name()).append('|');
+          .append(g.getColor()).append('|');
         for (String r : g.getRanks()) sb.append(r).append(',');
         sb.append('|');
         TreeMap<String, String> members = new TreeMap<String, String>();
@@ -220,13 +219,9 @@ public class GuildManager {
                         plugin.getLogger().warning("Skipping guild '" + name + "': bad master_uuid");
                         continue;
                     }
-                    TabMode mode;
-                    try { mode = TabMode.valueOf(rs.getString("tab_mode").toUpperCase()); }
-                    catch (Exception ex) { mode = TabMode.NAME; }
                     Guild g = new Guild(name, master, "Unknown", rs.getLong("created"));
                     String col = rs.getString("color");
                     if (col != null && !col.isEmpty()) g.setColor(col.charAt(0));
-                    g.setTabMode(mode);
                     byId.put(rs.getLong("id"), g);
                 }
             }
@@ -375,12 +370,11 @@ public class GuildManager {
             }
 
             String guildSql = mysql
-                    ? "INSERT INTO guilds(name, master_uuid, color, tab_mode, created) VALUES(?,?,?,?,?) " +
-                      "ON DUPLICATE KEY UPDATE master_uuid=VALUES(master_uuid), color=VALUES(color), " +
-                      "tab_mode=VALUES(tab_mode)"
-                    : "INSERT INTO guilds(name, master_uuid, color, tab_mode, created) VALUES(?,?,?,?,?) " +
-                      "ON CONFLICT(name) DO UPDATE SET master_uuid=excluded.master_uuid, " +
-                      "color=excluded.color, tab_mode=excluded.tab_mode";
+                        ? "INSERT INTO guilds(name, master_uuid, color, created) VALUES(?,?,?,?) " +
+                          "ON DUPLICATE KEY UPDATE master_uuid=VALUES(master_uuid), color=VALUES(color)"
+                        : "INSERT INTO guilds(name, master_uuid, color, created) VALUES(?,?,?,?) " +
+                          "ON CONFLICT(name) DO UPDATE SET master_uuid=excluded.master_uuid, " +
+                          "color=excluded.color";
 
             String memberSql = mysql
                     ? "INSERT INTO members(guild_id, uuid, name, rank_name, joined) VALUES(?,?,?,?,?) " +
@@ -397,8 +391,7 @@ public class GuildManager {
                     gp.setString(1, g.getName());
                     gp.setString(2, g.getMaster().toString());
                     gp.setString(3, String.valueOf(g.getColor()));
-                    gp.setString(4, g.getTabMode().name());
-                    gp.setLong(5, g.getCreated());
+                    gp.setLong(4, g.getCreated());
                     gp.executeUpdate();
                 }
 
